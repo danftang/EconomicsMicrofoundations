@@ -6,17 +6,21 @@
 #define ECONOMICSMICROFOUNDATIONS_AGENT_H
 
 #include <list>
+class Simulation;
 
 class Agent {
 public:
     Agent *     employer;
     double      wealth;
     double      wageExpectation;
+    double      lastWage;
     std::list<Agent *>  employees;
 
     Agent(double initialWealth) {
         employer = this; // unemployed
         wealth = initialWealth;
+        wageExpectation = initialWealth;
+        lastWage = initialWealth;
     }
 
     enum EmploymentStatus {
@@ -25,19 +29,22 @@ public:
         ENTREPRENEUR
     };
 
-    EmploymentStatus status() {
+    void step(Simulation &);
+
+    void negotiateEmployment(Simulation &);
+
+    void spend(Simulation &);
+
+    void work(Simulation &);
+
+    void manageBusiness(Simulation &);
+
+    EmploymentStatus status() const {
         if(employer != this) return EMPLOYED;
         if(employees.size() > 0) return ENTREPRENEUR;
         return UNEMPLOYED;
     }
 
-    void negotiateEmployment(Agent &employer);
-
-    double spend();
-
-    double work(double aggregateDemand);
-
-    void manageBusiness();
 };
 
 
