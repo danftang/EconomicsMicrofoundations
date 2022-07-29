@@ -4,30 +4,8 @@
 
 #include <random>
 #include "Agent.h"
-#include "Random.h"
+#include "mystd/Random.h"
 #include "Simulation.h"
-
-//void Agent::step(Simulation &sim) {
-//    switch(status()) {
-//        case ENTREPRENEUR:
-//            spend(sim);
-//            work(sim);
-//            manageBusiness(sim);
-//            break;
-//
-//        case UNEMPLOYED:
-//            spend(sim);
-//            wageExpectation = Random::nextDouble(0.0, wageExpectation);
-//            negotiateEmployment(sim);
-//            break;
-//
-//        case EMPLOYED:
-//            spend(sim);
-//            work(sim);
-//            negotiateEmployment(sim);
-//            break;
-//    }
-//}
 
 
 void Agent::step(Simulation &sim) {
@@ -68,17 +46,20 @@ void Agent::negotiateEmployment(Simulation &sim) {
     }
 }
 
+
 void Agent::spend(Simulation &sim) {
     double spending = Random::nextDouble(0.0, wealth);
     wealth -= spending;
-    sim.aggregateDemand += spending;
+    sim.generateDemand(spending);
 }
+
 
 void Agent::work(Simulation &sim) {
     double revenueGeneration = Random::nextDouble(0.0, sim.aggregateDemand);
     employer->wealth += revenueGeneration;
-    sim.aggregateDemand -= revenueGeneration;
+    sim.absorbDemand(revenueGeneration);
 }
+
 
 void Agent::manageBusiness(Simulation &sim) {
     for(auto employeeIt = employees.begin(); employeeIt != employees.end(); ++employeeIt) {
@@ -90,7 +71,7 @@ void Agent::manageBusiness(Simulation &sim) {
             wealth -= (*employeeIt)->wageExpectation;
         } else { // fire employee
             (*employeeIt)->employer = *employeeIt;
-            (*employeeIt)->wageExpectation = Random::nextDouble(0.0,(*employeeIt)->lastWage); // DIFFERENT FROM PAPER
+            (*employeeIt)->wageExpectation = Random::nextDouble(0.0,(*employeeIt)->lastWage); // DIFFERENT FROM PAPER, but needed to reproduce results
 //            (*employeeIt)->wageExpectation = (*employeeIt)->lastWage;
             sim.setHiringProbability(**employeeIt, (*employeeIt)->wealth);
             employeeIt = employees.erase(employeeIt);
@@ -99,5 +80,3 @@ void Agent::manageBusiness(Simulation &sim) {
     }
     if(employees.size() == 0) wageExpectation = wealth;
 }
-
-

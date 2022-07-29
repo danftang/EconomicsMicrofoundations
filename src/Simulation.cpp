@@ -4,9 +4,9 @@
 
 #include <algorithm>
 #include "Simulation.h"
-#include "Random.h"
+#include "mystd/Random.h"
 
-Simulation::Simulation(int nAgents): hiringDistribution(nAgents), aggregateDemand(0.0) {
+Simulation::Simulation(int nAgents): hiringDistribution(nAgents), aggregateDemand(0.0), cumulativeDemand(0.0) {
     const double initialWealth = 10.0;
     agents.reserve(nAgents);
     for(int i=0; i<nAgents; ++i) {
@@ -19,7 +19,7 @@ void Simulation::step() {
     for(int i=0; i<agents.size(); ++i) {
         chooseAgent().step(*this);
     }
-    sanityCheck();
+//    sanityCheck();
 }
 
 
@@ -54,7 +54,7 @@ double Simulation::proportionUnemployed() {
     return nUnemployed * 1.0/agents.size();
 }
 
-double Simulation::proportionOfEntrepreneurs() {
+double Simulation::proportionEntrepreneurs() {
     int n = 0;
     for(const Agent &agent: agents) if(agent.status() == Agent::ENTREPRENEUR) ++n;
     return n * 1.0/agents.size();
