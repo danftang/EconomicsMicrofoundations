@@ -1,49 +1,24 @@
 //
-// Created by daniel on 21/07/22.
+// Created by daniel on 11/08/22.
 //
 
 #ifndef ECONOMICSMICROFOUNDATIONS_AGENT_H
 #define ECONOMICSMICROFOUNDATIONS_AGENT_H
 
-#include <list>
-class Simulation;
 
 class Agent {
 public:
-    Agent *     employer;
-    double      wealth;
-    double      wageExpectation;
-    double      lastWage;
-    std::list<Agent *>  employees;
+    Agent(double initialWealth): wealth(initialWealth) { }
 
-    Agent(double initialWealth) {
-        employer = this; // unemployed
-        wealth = initialWealth;
-        wageExpectation = initialWealth;
-        lastWage = initialWealth;
+    bool transferMoneyTo(Agent &recipient, double amount) {
+        if(amount > wealth) return false;
+        wealth -= amount;
+        recipient.wealth += amount;
+        return true;
     }
 
-    enum EmploymentStatus {
-        EMPLOYED,
-        UNEMPLOYED,
-        ENTREPRENEUR
-    };
+    double wealth;
 
-    void step(Simulation &);
-
-    void negotiateEmployment(Simulation &);
-
-    void spend(Simulation &);
-
-    void work(Simulation &);
-
-    void manageBusiness(Simulation &);
-
-    EmploymentStatus status() const {
-        if(employer != this) return EMPLOYED;
-        if(employees.size() > 0) return ENTREPRENEUR;
-        return UNEMPLOYED;
-    }
 
 };
 

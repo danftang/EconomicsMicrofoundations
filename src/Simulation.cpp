@@ -6,85 +6,85 @@
 #include "Simulation.h"
 #include "mystd/Random.h"
 
-Simulation::Simulation(int nAgents): hiringDistribution(nAgents), aggregateDemand(0.0), cumulativeDemand(0.0) {
+
+Simulation::Simulation(int nAgents): aggregateDemandAccount(0.0), fund(0.0), cumulativeDemand(0.0) {
     const double initialWealth = 10.0;
     agents.reserve(nAgents);
-    for(int i=0; i<nAgents; ++i) {
-        Agent &newAgent = agents.emplace_back(initialWealth);
-        setHiringProbability(newAgent, initialWealth);
-    }
+    for(int i=0; i<nAgents; ++i) agents.emplace_back(initialWealth);
 }
 
 void Simulation::step() {
     for(int i=0; i<agents.size(); ++i) {
         chooseAgent().step(*this);
     }
+    auto companyIt = companies.begin();
+    while(companyIt != companies.end()) {
+        companyIt->step(*this);
+        if(companyIt->employees.size() == 0) {
+            fund.wealth += companyIt->wealth;
+            companyIt = companies.erase(companyIt);
+        } else {
+            companies.set(companyIt, companyIt->wealth);
+            ++companyIt;
+        }
+    }
+
 //    sanityCheck();
 }
 
 
-Agent &Simulation::choosePotentialEmployer(Agent &forAgent) {
-    for(int i=0; i<1000; ++i) {
-        Agent &employer = agents[hiringDistribution(Random::gen)];
-        assert(employer.status() != Agent::EMPLOYED);
-        assert(fabs(hiringDistribution[&employer - agents.data()] - employer.wealth) < 0.00001);
-        if(&employer != &forAgent) return employer;
-    }
-    assert(false);
-    return forAgent; // likely the only employer
+Company &Simulation::choosePotentialEmployer() {
+    return *companies(Random::gen);
 }
 
 std::vector<int> Simulation::firmSizes() {
     std::vector<int> sizes;
-    for(const Agent &agent: agents) {
-        sizes.push_back(agent.employees.size());
+    for(const Company &company: companies) {
+        sizes.push_back(company.employees.size());
     }
     return sizes;
 }
 
 double Simulation::totalWealth() {
     double total = 0.0;
-    for(const Agent &agent: agents) total += agent.wealth;
+    for(const Person &agent: agents) total += agent.wealth;
+    for(const Company &company: companies) total += company.wealth;
+    total += fund.wealth + aggregateDemandAccount.wealth;
     return total;
 }
 
 double Simulation::proportionUnemployed() {
     int nUnemployed = 0;
-    for(const Agent &agent: agents) if(agent.status() == Agent::UNEMPLOYED) ++nUnemployed;
+    for(const Person &agent: agents) if(!agent.isEmployed()) ++nUnemployed;
     return nUnemployed * 1.0/agents.size();
 }
 
-double Simulation::proportionEntrepreneurs() {
-    int n = 0;
-    for(const Agent &agent: agents) if(agent.status() == Agent::ENTREPRENEUR) ++n;
-    return n * 1.0/agents.size();
-}
-
-double Simulation::proportionEmployed() {
-    int n = 0;
-    for(const Agent &agent: agents) if(agent.status() == Agent::EMPLOYED) ++n;
-    return n * 1.0/agents.size();
-}
-
 void Simulation::sanityCheck() {
-    double totalMoney = 0.0;
-    for(const Agent &agent: agents) {
-        if(agent.status() == Agent::EMPLOYED) {
-            assert(fabs(hiringDistribution[&agent - agents.data()]) < 0.000001);
-        } else {
-//            std::cout << agent.wealth << " " << hiringDistribution[&agent - agents.data()] << " " << agent.status() << std::endl;
-            assert(fabs(hiringDistribution[&agent - agents.data()] - agent.wealth) < 0.0001);
-        }
-        if(agent.status() == Agent::ENTREPRENEUR) {
-            for(const Agent *employee: agent.employees) assert(employee->employer == &agent);
-        } else if(agent.status() == Agent::EMPLOYED) {
-            assert(find(agent.employer->employees.begin(), agent.employer->employees.end(), &agent) != agent.employer->employees.end());
-        }
-        totalMoney += agent.wealth;
-        assert(agent.wealth >= 0.0);
-        if(agent.employees.size() > 0) assert(agent.employer == &agent);
+    assert(fabs(totalWealth() - 10000.0) < 0.0001);
 
+    int totalEmployees = 0;
+    for(auto companyIt = companies.begin(); companyIt != companies.end(); ++companyIt) {
+        assert(fabs(companyIt->wealth - companies.weight(companyIt)) < 1e-8);
+        for(const Person *employee: companyIt->employees) assert(employee->employer == &*companyIt);
+        totalEmployees += companyIt->employees.size();
     }
-    totalMoney += aggregateDemand;
-    assert(fabs(totalMoney - 10000.0) < 0.0001);
+
+    int totalEmployed = 0;
+    for(const Person &agent: agents) {
+        if(agent.isEmployed()) {
+            ++totalEmployed;
+        }
+        assert(agent.wealth >= 0.0);
+    }
+    assert(totalEmployed == totalEmployees);
+}
+
+Company *Simulation::startNewCompany(double founderInvestmentExpectation) {
+    double investment = fund.getStartupInvestment();
+    if(investment > founderInvestmentExpectation) {
+        fund.wealth -= investment;
+        auto newCompanyIt = companies.add(Company(investment), investment);
+        return &*newCompanyIt;
+    }
+    return nullptr;
 }

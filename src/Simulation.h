@@ -6,32 +6,35 @@
 #define ECONOMICSMICROFOUNDATIONS_SIMULATION_H
 
 #include "mystd/Random.h"
+#include "Person.h"
+#include "mystd/MutableCategorical.h"
+#include "Company.h"
+#include "VCFund.h"
 #include "Agent.h"
-#include "mystd/MutableCategoricalArray.h"
 
 class Simulation {
 public:
-    std::vector<Agent>      agents;
-    MutableCategoricalArray hiringDistribution; // by index into vector of agents
-    double                  aggregateDemand;    // un-allocated demand for this step
+    std::vector<Person>      agents;
+    MutableCategorical<Company> companies;  // container of companies from which we can draw for recruitment
+    VCFund                  fund;
+    Agent                   aggregateDemandAccount;
     double                  cumulativeDemand;   // demand since last reset
 
     Simulation(int nAgents);
 
     void step();
 
-    void setHiringProbability(Agent &agent, double p)   { hiringDistribution[&agent - agents.data()] = p; }
-    Agent &choosePotentialEmployer(Agent &forAgent);
-    Agent &chooseAgent()                                { return agents[Random::nextInt(0, agents.size())]; }
+    void setHiringProbability(MutableCategorical<Company>::iterator company, double p)   { companies.set(company, p); }
+    Company &choosePotentialEmployer();
+    Person &chooseAgent()                                { return agents[Random::nextInt(0, agents.size())]; }
+    Company *startNewCompany(double founderInvestmentExpectation);
 
-    double proportionEntrepreneurs();
     double proportionUnemployed();
-    double proportionEmployed();
     std::vector<int> firmSizes();
     double totalWealth();
 
-    void generateDemand(double amount) { aggregateDemand += amount; cumulativeDemand += amount; };
-    void absorbDemand(double amount) { aggregateDemand -= amount; }
+//    void generateDemand(double amount) { aggregateDemand += amount; cumulativeDemand += amount; };
+//    void absorbDemand(double amount) { aggregateDemand -= amount; }
 
     void sanityCheck();
 protected:
