@@ -5,21 +5,16 @@
 #ifndef ECONOMICSMICROFOUNDATIONS_AGENT_H
 #define ECONOMICSMICROFOUNDATIONS_AGENT_H
 
+#include "Bank.h"
 
 class Agent {
 public:
-    Agent(double initialWealth): wealth(initialWealth) { }
+    Agent();
+    Agent(const Agent &other) = delete;
+    Agent(Agent &&other) = delete;
+    ~Agent();
 
-    bool transferMoneyTo(Agent &recipient, double amount) {
-        if(amount > wealth) return false;
-        wealth -= amount;
-        recipient.wealth += amount;
-        return true;
-    }
-
-    double wealth;
-
-
+    Bank::AccountID bankAccount;
 };
 
 

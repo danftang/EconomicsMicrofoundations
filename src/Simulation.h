@@ -9,37 +9,32 @@
 #include "Person.h"
 #include "mystd/MutableCategorical.h"
 #include "Company.h"
-#include "VCFund.h"
 #include "Agent.h"
+#include "Bank.h"
 
 class Simulation {
 public:
-    std::vector<Person>      agents;
+    constexpr static int     initialAgentWealth = 1000;
+
+    Bank                        bank;
+    std::vector<Person>         people;
     MutableCategorical<Company> companies;  // container of companies from which we can draw for recruitment
-    VCFund                  fund;
-    Agent                   aggregateDemandAccount;
-    double                  cumulativeDemand;   // demand since last reset
+    Bank::AccountID             aggregateDemandAccount;
+    long int                    cumulativeDemand;   // demand since last reset
 
     Simulation(int nAgents);
 
     void step();
+    MutableCategorical<Company>::iterator choosePotentialEmployer();
+    Person &chooseAgent();
+    Company *startNewCompany(int founderInvestmentExpectation);
 
-    void setHiringProbability(MutableCategorical<Company>::iterator company, double p)   { companies.set(company, p); }
-    Company &choosePotentialEmployer();
-    Person &chooseAgent()                                { return agents[Random::nextInt(0, agents.size())]; }
-    Company *startNewCompany(double founderInvestmentExpectation);
-
+    // diagnostics
     double proportionUnemployed();
     std::vector<int> firmSizes();
-    double totalWealth();
-
-//    void generateDemand(double amount) { aggregateDemand += amount; cumulativeDemand += amount; };
-//    void absorbDemand(double amount) { aggregateDemand -= amount; }
-
     void sanityCheck();
-protected:
-
 };
 
+extern thread_local Simulation sim;
 
 #endif //ECONOMICSMICROFOUNDATIONS_SIMULATION_H

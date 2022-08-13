@@ -9,51 +9,54 @@
 
 
 void Person::step(Simulation &sim) {
+    if(Random::nextBernoulli(1.0/(47.0*12.0))) die(sim);
     negotiateEmployment(sim);
     spend(sim);
     if(isEmployed()) work(sim);
-    invest(sim);
 }
 
 
 void Person::negotiateEmployment(Simulation &sim) {
-    double pStartNewCompany = 0.25;// sim.fund.wealth / (sim.fund.wealth + sim.companies.sum());
+    double pStartNewCompany = 0.1;
     if(Random::nextDouble() < pStartNewCompany) {
-        Company *newCompany = sim.startNewCompany(wageExpectation);
-        if(newCompany != nullptr) startWorkingFor(newCompany);
+        Company *newCompany = sim.startNewCompany(wageExpectation/2+1);
+        if(newCompany != nullptr) {
+            if(isEmployed()) employer->endEmployment(this);
+            wageExpectation = wageExpectation/2+1;
+            newCompany->hire(this);
+        }
     } else {
-        Company &newEmployer = sim.choosePotentialEmployer();
-        double negotiatedWage = newEmployer.negotiateWage(wageExpectation);
-        if (negotiatedWage > wageExpectation) {
-            startWorkingFor(&newEmployer);
-            wageExpectation = negotiatedWage;
-        } else if (!isEmployed()) {
-            wageExpectation = Random::nextDouble(0.0, wageExpectation);
+        auto newEmployer = sim.choosePotentialEmployer();
+        if(newEmployer != sim.companies.end()) {
+            int negotiatedWage = newEmployer->negotiateWage(wageExpectation);
+            if (negotiatedWage > wageExpectation) {
+                if(isEmployed()) employer->endEmployment(this);
+                wageExpectation = negotiatedWage;
+                newEmployer->hire(this);
+            }
         }
     }
+    if (!isEmployed()) wageExpectation = Random::nextInt(1, wageExpectation + 1);
 }
 
 
 void Person::spend(Simulation &sim) {
-    double spending = Random::nextDouble(0.0, wealth);
-    transferMoneyTo(sim.aggregateDemandAccount, spending);
+    int spending = Random::nextInt(0, bankAccount->balance() + 1);
+    sim.bank.transfer(bankAccount, sim.aggregateDemandAccount, spending);
+    sim.cumulativeDemand += spending;
 }
 
 
 void Person::work(Simulation &sim) {
-    double valueOfWork = Random::nextDouble(0.0, sim.aggregateDemandAccount.wealth);
-    sim.aggregateDemandAccount.transferMoneyTo(*employer, valueOfWork);
+    int valueOfWork = Random::nextInt(0, sim.aggregateDemandAccount->balance() + 1);
+    sim.bank.transfer(sim.aggregateDemandAccount, employer->bankAccount, valueOfWork);
 }
 
 
-void Person::invest(Simulation &sim) {
-    double investment = Random::nextDouble(0.0, wealth);
-    wealth -= investment;
-    sim.fund.wealth += investment;
-}
-
-void Person::startWorkingFor(Company *newEmployer) {
-    if(employer != nullptr) employer->endEmployment(this);
-    employer = newEmployer;
-    newEmployer->employees.push_back(this);
+// Die/retire and be replaced by offspring
+// offspring inherits all wealth
+void Person::die(Simulation &sim) {
+    if(isEmployed()) employer->endEmployment(this);
+    wageExpectation = 1;
+    lastWage = 1;
 }

@@ -13,37 +13,22 @@ class Company;
 
 class Person: public Agent {
 public:
-    Company *   employer; // employer or null if unemployed
-    double      shares;
-    double      wageExpectation;
-    double      lastWage;
+    Company *   employer; // employer or null if unemployed. Pointer is managed by employer.
+    int         wageExpectation;
+    int         lastWage;
 
-    Person(double initialWealth): Agent(initialWealth) {
+    Person() {
         employer = nullptr; // unemployed
-        wageExpectation = initialWealth;
-        lastWage = initialWealth;
+//        wageExpectation = initialWageExpectation;
+//        lastWage = initialWageExpectation;
     }
 
     void step(Simulation &);
-
     void negotiateEmployment(Simulation &);
-
     void spend(Simulation &);
-
     void work(Simulation &);
-
-    void invest(Simulation &);
-
+    void die(Simulation &);
     bool isEmployed() const { return employer != nullptr; }
-
-    void startWorkingFor(Company *newEmployer);
-
-//    EmploymentStatus status() const {
-//        if(employer != this) return EMPLOYED;
-//        if(employees.size() > 0) return ENTREPRENEUR;
-//        return UNEMPLOYED;
-//    }
-
 };
 
 
