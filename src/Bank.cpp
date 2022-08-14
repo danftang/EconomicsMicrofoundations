@@ -28,7 +28,6 @@ int Bank::liabilities() {
 
 void Bank::step() {
     // charge loan interest and distribute credit interest.
-    sanityCheck();
     if(loans.size() > 2) {
         int loanInterest = loanInterestAccount->balance()/((int)loans.size() - 2);
         for (auto loanIt = loans.begin(); loanIt != loans.end(); ++loanIt) {
@@ -40,7 +39,6 @@ void Bank::step() {
     for (auto accountIt = accounts.begin(); accountIt != accounts.end(); ++accountIt) {
         if(accountIt != creditInterestAccount) transfer(creditInterestAccount, accountIt, creditInterest);
     }
-    sanityCheck();
 }
 
 bool Bank::transfer(Bank::AccountID sender, Bank::AccountID recipient, int amount) {

@@ -13,20 +13,14 @@ Simulation::Simulation(int nAgents): people(nAgents), cumulativeDemand(0.0) {
         people[i].wageExpectation = initialAgentWealth;
         people[i].lastWage = initialAgentWealth;
     }
-    aggregateDemandAccount = bank.openAccount();
 }
 
 
 void Simulation::step() {
-    sanityCheck();
     bank.step();
-    for(int i=0; i < people.size(); ++i) {
-        chooseAgent().step(*this);
-    }
-//    std::cout << bank.assets() - bank.liabilities() << std::endl;
     auto companyIt = companies.begin();
     while(companyIt != companies.end()) {
-        companyIt->step(*this);
+        companyIt->step();
         if(companyIt->employees.size() == 0) {
             companyIt = companies.erase(companyIt);
         } else {
@@ -34,13 +28,14 @@ void Simulation::step() {
             ++companyIt;
         }
     }
-//    std::cout << bank.assets() - bank.liabilities() << std::endl;
-
     sanityCheck();
+    for(int i=0; i < people.size(); ++i) {
+        chooseAgent().step();
+    }
 }
 
 
-MutableCategorical<Company>::iterator Simulation::choosePotentialEmployer() {
+MutableCategorical<Company>::iterator Simulation::chooseEmployerByWealth() {
     return companies(Random::gen);
 }
 
@@ -79,10 +74,10 @@ void Simulation::sanityCheck() {
     assert(totalEmployed == totalEmployees);
 }
 
-Company *Simulation::startNewCompany(int founderInvestmentExpectation) {
+Company *Simulation::startNewCompany(int founderInvestmentExpectation, double product) {
     int loan = bank.getStartupLoan();
     if(loan > founderInvestmentExpectation) {
-        auto newCompanyIt = companies.emplace(loan);
+        auto newCompanyIt = companies.emplace(loan, product);
         bank.transfer(newCompanyIt->loanAccount, newCompanyIt->bankAccount, loan);
         return &*newCompanyIt;
     }
@@ -90,3 +85,11 @@ Company *Simulation::startNewCompany(int founderInvestmentExpectation) {
 }
 
 Person &Simulation::chooseAgent() { return people[Random::nextInt(0, people.size())]; }
+
+double Simulation::collectiveWellbeing() {
+    double wellbeing = 0.0;
+    for(const Person &person : people) {
+        wellbeing += person.wellbeing();
+    }
+    return wellbeing;
+}

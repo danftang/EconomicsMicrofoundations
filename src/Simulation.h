@@ -19,19 +19,19 @@ public:
     Bank                        bank;
     std::vector<Person>         people;
     MutableCategorical<Company> companies;  // container of companies from which we can draw for recruitment
-    Bank::AccountID             aggregateDemandAccount;
     long int                    cumulativeDemand;   // demand since last reset
 
     Simulation(int nAgents);
 
     void step();
-    MutableCategorical<Company>::iterator choosePotentialEmployer();
+    MutableCategorical<Company>::iterator chooseEmployerByWealth();
     Person &chooseAgent();
-    Company *startNewCompany(int founderInvestmentExpectation);
+    Company *startNewCompany(int founderInvestmentExpectation, double product);
 
     // diagnostics
     double proportionUnemployed();
     std::vector<int> firmSizes();
+    double collectiveWellbeing();
     void sanityCheck();
 };
 

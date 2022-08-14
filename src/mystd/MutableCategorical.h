@@ -152,6 +152,8 @@ void MutableCategorical<T>::set(iterator category, double weight) {
     mca.set(category.index(), weight);
 }
 
+
+// args should be the arguments to a constructor of T
 template<class T>
 template<class... ARGS>
 typename MutableCategorical<T>::iterator MutableCategorical<T>::emplace(double weight, ARGS &&... args) {

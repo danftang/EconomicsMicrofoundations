@@ -8,15 +8,30 @@
 #include "Person.h"
 #include "mystd/Random.h"
 
-void Company::step(Simulation &sim) {
-    auto employeeIt = employees.begin();
+Company::Company(double product) :
+        Agent(),
+        loanAccount(sim.bank.openLoanAccount()),
+        product(product),
+        stock(0.0),
+        productivityPerEmployee(1.0),
+        toilPerUnitproduct(SPICE_TIOL*product + SUGAR_TOIL*(1.0-product)) {
+    unitPrice = (1.0 + product)*(1.0+profitMargin); // price is relative to cost of growing
+}
+
+Company::~Company() {
+    sim.bank.transfer(bankAccount, loanAccount, std::min(bankAccount->balance(), -loanAccount->balance())); // pay off any debt
+    sim.bank.closeLoanAccount(loanAccount);
+}
+
+void Company::step() {
+    double costOfProduction = bankAccount->balance(); // ... we'll subtract balance after costs
     if(loanAccount->balance() != 0) {
         int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance()/5 + 1);
         sim.bank.transfer(bankAccount, loanAccount, loanRepayment);
     }
+    auto employeeIt = employees.begin();
     while(employeeIt != employees.end()) {
-        assert((*employeeIt)->employer == this);
-        if (bankAccount->balance() >= (*employeeIt)->wageExpectation) {
+        if (bankAccount->balance() >= (*employeeIt)->wageExpectation) { // pay employee
             sim.bank.transfer(bankAccount, (*employeeIt)->bankAccount, (*employeeIt)->wageExpectation);
             (*employeeIt)->lastWage = (*employeeIt)->wageExpectation;
             ++employeeIt;
@@ -26,29 +41,28 @@ void Company::step(Simulation &sim) {
             employeeIt = employees.erase(employeeIt);
         }
     }
+    costOfProduction -= bankAccount->balance();
+    double production = employees.size() * productivityPerEmployee * toilPerUnitproduct;
+    stock += production;
+    unitPrice = 1 + (int)(costOfProduction * (1.0 + profitMargin) / production);
 }
 
-int Company::negotiateWage(int applicantWageExpectation) {
-    int negotiatedWage = Random::nextInt(applicantWageExpectation, 2 * applicantWageExpectation + 1);
+int Company::negotiateWage(Person &applicant) {
+    if(applicant.employer == this) return applicant.wageExpectation;
+    int negotiatedWage = Random::nextInt(applicant.wageExpectation, 2 * applicant.wageExpectation + 1);
     if (negotiatedWage > bankAccount->balance()) negotiatedWage = bankAccount->balance();
     return negotiatedWage;
 }
 
-Company::Company() : Agent(), loanAccount(sim.bank.openLoanAccount()) { }
-
-Company::~Company() {
-    sim.bank.transfer(bankAccount, loanAccount, std::min(bankAccount->balance(), -loanAccount->balance())); // pay off any debt
-    sim.bank.closeLoanAccount(loanAccount);
-}
 
 void Company::sanityCheck() {
     for(const Person *employee: employees) assert(employee->employer == this);
 }
 
-void Company::endEmployment(Person *employee) {
-    assert(employee->employer == this);
-    employee->employer = nullptr;
-    employees.remove(employee);
+void Company::endEmployment(Person &employee) {
+    assert(employee.employer == this);
+    employee.employer = nullptr;
+    employees.remove(&employee);
 }
 
 void Company::hire(Person *employee) {
