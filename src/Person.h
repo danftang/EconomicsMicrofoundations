@@ -18,24 +18,19 @@ class Person: public Agent {
 public:
     enum WellbeingDimension {
         TOIL,
-        CONSUMPTION
+        CONSUMPTION,
+        SECURITY
     };
 
+    constexpr static int     initialAgentWealth = 1000;
     Company *   employer; // employer or null if unemployed. Pointer is managed by employer.
     int         wageExpectation;
     int         lastWage;
-    double      consumptionWellbeing;
+    double      currentConsumptionWellbeing;
     std::array<double,3>      mu;       // wellbeing function (of monthly toil and monthly consumption)
     std::array<double,3>      sigma;    // assuming 2D Gaussian with diagonal covaraince matrix
 
-    Person() {
-        mu = {1.0 , 0.5};
-        sigma = {0.25, 0.25};
-        employer = nullptr; // unemployed
-        wageExpectation = 1;
-        lastWage = 1;
-        consumptionWellbeing = 0.0;
-    }
+    Person();
 
     void step();
     void negotiateEmployment();
@@ -43,7 +38,9 @@ public:
 //    void work(Simulation &);
     void die();
     bool isEmployed() const { return employer != nullptr; }
-    double wellbeing(WellbeingDimension d, double x) const;
+    double consumptionWellbeing(double product) const { double x = (product-mu[CONSUMPTION])/sigma[CONSUMPTION]; return exp(-x*x); }
+    double toilWellbeing(double toil) const { double x = (toil-mu[TOIL])/sigma[TOIL]; return exp(-x*x); }
+    double securityWellbeing(double balance) const { double x = balance/sigma[TOIL]; return erf(x); }
     double wellbeing() const;
 };
 

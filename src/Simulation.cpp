@@ -7,15 +7,15 @@
 #include "mystd/Random.h"
 
 
-Simulation::Simulation(int nAgents): people(nAgents), cumulativeDemand(0.0) {
-    for(int i=0; i<nAgents; ++i) {
-        bank.transfer(bank.reserveAccount, people[i].bankAccount, initialAgentWealth);
-        people[i].wageExpectation = initialAgentWealth;
-        people[i].lastWage = initialAgentWealth;
-    }
-}
+Simulation::Simulation(int nAgents): people(nAgents), cumulativeDemand(0.0) { }
 
 
+// hiring (should we only hire if we can do payroll with no firing?)
+// firing (if payroll cannot be payed with current cash reserves (who to fire?))
+// payroll (for this month)
+// production
+// consumption
+// (death)
 void Simulation::step() {
     bank.step();
     auto companyIt = companies.begin();
@@ -30,7 +30,8 @@ void Simulation::step() {
     }
     sanityCheck();
     for(int i=0; i < people.size(); ++i) {
-        chooseAgent().step();
+//        chooseAgent().step();
+        people[i].step();
     }
 }
 
@@ -74,10 +75,10 @@ void Simulation::sanityCheck() {
     assert(totalEmployed == totalEmployees);
 }
 
-Company *Simulation::startNewCompany(int founderInvestmentExpectation, double product) {
+Company *Simulation::startNewCompany(int founderInvestmentExpectation, double product, double productivity) {
     int loan = bank.getStartupLoan();
     if(loan > founderInvestmentExpectation) {
-        auto newCompanyIt = companies.emplace(loan, product);
+        auto newCompanyIt = companies.emplace(loan, product, productivity);
         bank.transfer(newCompanyIt->loanAccount, newCompanyIt->bankAccount, loan);
         return &*newCompanyIt;
     }

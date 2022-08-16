@@ -8,15 +8,14 @@
 #include "Person.h"
 #include "mystd/Random.h"
 
-Company::Company(double product) :
+Company::Company(double product, double productivity) :
         Agent(),
         loanAccount(sim.bank.openLoanAccount()),
         product(product),
         stock(0.0),
-        productivityPerEmployee(1.0),
-        toilPerUnitproduct(SPICE_TIOL*product + SUGAR_TOIL*(1.0-product)) {
-    unitPrice = (1.0 + product)*(1.0+profitMargin); // price is relative to cost of growing
-}
+        productivityPerEmployee(productivity),
+        toilPerUnitproduct(SPICE_TIOL*product + SUGAR_TOIL*(1.0-product)),
+        age(0) { }
 
 Company::~Company() {
     sim.bank.transfer(bankAccount, loanAccount, std::min(bankAccount->balance(), -loanAccount->balance())); // pay off any debt
@@ -29,6 +28,8 @@ void Company::step() {
         int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance()/5 + 1);
         sim.bank.transfer(bankAccount, loanAccount, loanRepayment);
     }
+    // payroll and firing
+    std::shuffle(employees.begin(), employees.end(), Random::gen);
     auto employeeIt = employees.begin();
     while(employeeIt != employees.end()) {
         if (bankAccount->balance() >= (*employeeIt)->wageExpectation) { // pay employee
@@ -38,13 +39,16 @@ void Company::step() {
         } else { // fire employee
             (*employeeIt)->wageExpectation = Random::nextInt(1,(*employeeIt)->lastWage+1); // DIFFERENT FROM PAPER, but needed to reproduce results
             (*employeeIt)->employer = nullptr;
-            employeeIt = employees.erase(employeeIt);
+            *employeeIt = employees[employees.size()-1];
+            employees.pop_back();
         }
     }
+    // production and price setting
     costOfProduction -= bankAccount->balance();
-    double production = employees.size() * productivityPerEmployee * toilPerUnitproduct;
+    double production = employees.size() * productivityPerEmployee / toilPerUnitproduct;
     stock += production;
     unitPrice = 1 + (int)(costOfProduction * (1.0 + profitMargin) / production);
+    ++age;
 }
 
 int Company::negotiateWage(Person &applicant) {
@@ -60,10 +64,18 @@ void Company::sanityCheck() {
 }
 
 void Company::endEmployment(Person &employee) {
-    assert(employee.employer == this);
-    employee.employer = nullptr;
-    employees.remove(&employee);
+    auto employeeIt = std::find(employees.begin(), employees.end(), &employee);
+    if(employeeIt != employees.end()) endEmployment(employeeIt);
 }
+
+
+void Company::endEmployment(std::vector<Person *>::iterator employeeIt) {
+    assert((*employeeIt)->employer == this);
+    (*employeeIt)->employer = nullptr;
+    *employeeIt = employees[employees.size()-1];
+    employees.pop_back();
+}
+
 
 void Company::hire(Person *employee) {
     assert(employee->employer == nullptr);

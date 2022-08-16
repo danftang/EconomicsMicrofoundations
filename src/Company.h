@@ -16,21 +16,23 @@ public:
     constexpr static const double   SPICE_TIOL = 1.5; // person-months of standard-productivity toil needed to grow 1 unit of spice
 
 
-    std::list<Person *>     employees;
+    std::vector<Person *>   employees;
     Bank::AccountID         loanAccount;
     const double            product;    // sugar/spice mix
     const double            toilPerUnitproduct;
+    const double            productivityPerEmployee; // how hard do employees work?
     double                  stock;      // amount of product available
-    double                  productivityPerEmployee; // how hard do employees work?
     int                     unitPrice;
+    int                     age;    // of company in months (steps)
 
-    Company(double product);
+    Company(double product, double productivity);
     ~Company();
 
     void step();
-    void endEmployment(Person &employee);
     void hire(Person *employee);
     int negotiateWage(Person &);
+    void endEmployment(Person &employee);
+    void endEmployment(std::vector<Person *>::iterator employeeIt);
     void sanityCheck();
 };
 

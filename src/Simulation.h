@@ -14,7 +14,6 @@
 
 class Simulation {
 public:
-    constexpr static int     initialAgentWealth = 1000;
 
     Bank                        bank;
     std::vector<Person>         people;
@@ -26,7 +25,7 @@ public:
     void step();
     MutableCategorical<Company>::iterator chooseEmployerByWealth();
     Person &chooseAgent();
-    Company *startNewCompany(int founderInvestmentExpectation, double product);
+    Company *startNewCompany(int founderInvestmentExpectation, double product, double productivity);
 
     // diagnostics
     double proportionUnemployed();
