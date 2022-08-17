@@ -15,14 +15,15 @@ public:
     double start; // lowest value of first bin
     double binWidth;  // width of bin
     std::vector<std::pair<double,int>> frequency; // <bin-midpoint, frequency>
+    std::string title;
 
-    Histogram(double start, double end, double binWidth): start(start), binWidth(binWidth) {
+    Histogram(double start, double end, double binWidth, std::string title): start(start), binWidth(binWidth), title(std::move(title)) {
         int nBins = (end-start)/binWidth - 0.5;
         initialiseFrequencyVector(nBins);
     }
     
     template<class T>
-    Histogram(const std::vector<T> &data, int nBins) {
+    Histogram(const std::vector<T> &data, int nBins, std::string title): title(std::move(title)) {
         if(data.size() != 0) {
             double min = data[0];
             double max = data[0];
@@ -50,7 +51,7 @@ public:
     }
 
 
-    void plot(std::string title) {
+    void plot() {
         Gnuplot gp;
         gp << "plot '-' with histeps title '" << title << "'" << std::endl;
         gp.send1d(frequency);
@@ -59,6 +60,12 @@ public:
     friend std::ostream &operator <<(std::ostream &out, const Histogram &histogram) {
         for(const auto &point: histogram.frequency) out << point.first << " " << point.second << std::endl;
         return out;
+    }
+
+    friend Gnuplot &operator <<(Gnuplot &gp, const Histogram &histogram) {
+        gp << "plot '-' with histeps title '" << histogram.title << "'" << std::endl;
+        gp.send1d(histogram.frequency);
+        return gp;
     }
 
 protected:

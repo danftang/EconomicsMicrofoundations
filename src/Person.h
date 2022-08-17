@@ -39,9 +39,14 @@ public:
     void die();
     bool isEmployed() const { return employer != nullptr; }
     double consumptionWellbeing(double product) const { double x = (product-mu[CONSUMPTION])/sigma[CONSUMPTION]; return exp(-x*x); }
-    double toilWellbeing(double toil) const { double x = (toil-mu[TOIL])/sigma[TOIL]; return exp(-x*x); }
-    double securityWellbeing(double balance) const { double x = balance/sigma[TOIL]; return erf(x); }
+    double toilWellbeing() const;
+    double securityWellbeing() const;
+    double securityWellbeing(double balance) const;
     double wellbeing() const;
+
+protected:
+    Company *selectProductFromAdvertising();
+    Company *selectBestAvailableProduct();
 };
 
 

@@ -29,7 +29,14 @@ void Person::step() {
 void Person::negotiateEmployment() {
     double rand = Random::nextDouble();
     double pStartNewCompany = 0.025;
-    double cLookForNewJobIfEmployed = pStartNewCompany + 0.05;
+
+    // rational based on toilWellbeing and restlessness if toil is non-optimal
+    double cLookForNewJob = isEmployed()?pStartNewCompany + 0.05 * (2.0 - toilWellbeing()):1.0;
+
+    // this function creates a split product marketplace, if a company holds on to employees it
+    // can somehow carry on (cheaper product for lower paid?)
+//    double cLookForNewJob = isEmployed()?pStartNewCompany + 0.05 * (employer->toilPerUnitproduct - 0.5):1.0;
+
     if(rand < pStartNewCompany) {
         Company *newCompany = sim.startNewCompany(wageExpectation/2+1, Random::nextDouble(), Random::nextDouble(0.5, 1.5));
         if(newCompany != nullptr) {
@@ -37,7 +44,7 @@ void Person::negotiateEmployment() {
             wageExpectation = wageExpectation/2+1;
             newCompany->hire(this);
         }
-    } else if(!isEmployed() || rand < cLookForNewJobIfEmployed) {
+    } else if(rand < cLookForNewJob) {
         auto newEmployer = sim.chooseEmployerByWealth();
         if(newEmployer != sim.companies.end()) {
             int negotiatedWage = newEmployer->negotiateWage(*this);
@@ -54,34 +61,7 @@ void Person::negotiateEmployment() {
 
 void Person::spend() {
     if(sim.companies.size() == 0) return;
-    Company *bestCompany = nullptr;
-    double bestNonToilWellbeing = 0.0;
-
-//    // find best product. Advertising version
-//    const int nProductsToSearch = 20;
-//    for(int t=0; t<nProductsToSearch; ++t) {
-//        Company &manufacturer = *sim.chooseEmployerByWealth();
-//        if(manufacturer.stock >= 1.0 && manufacturer.unitPrice <= bankAccount->balance()) {
-//            double potentialNonToilWellbeing = consumptionWellbeing(manufacturer.product)*securityWellbeing(bankAccount->balance() - manufacturer.unitPrice);
-//            if(potentialNonToilWellbeing > bestNonToilWellbeing) {
-//                bestCompany = &manufacturer;
-//                bestNonToilWellbeing = potentialNonToilWellbeing;
-//            }
-//        }
-//    }
-
-    // find best product, exhaustive search
-    for(auto manufacturerIt = sim.companies.begin(); manufacturerIt != sim.companies.end(); ++ manufacturerIt) {
-        if(manufacturerIt->stock >= 1.0 && manufacturerIt->unitPrice <= bankAccount->balance()) {
-            double potentialNonToilWellbeing = consumptionWellbeing(manufacturerIt->product)*securityWellbeing(bankAccount->balance() - manufacturerIt->unitPrice);
-            if(potentialNonToilWellbeing > bestNonToilWellbeing) {
-                bestCompany = &*manufacturerIt;
-                bestNonToilWellbeing = potentialNonToilWellbeing;
-            }
-        }
-    }
-
-
+    Company *bestCompany = selectProductFromAdvertising();
     if(bestCompany != nullptr) {
         sim.bank.transfer(bankAccount, bestCompany->bankAccount, bestCompany->unitPrice);
         sim.cumulativeDemand += bestCompany->unitPrice;
@@ -106,9 +86,55 @@ void Person::die() {
 //}
 
 double Person::wellbeing() const {
-    return
-        currentConsumptionWellbeing *
-        toilWellbeing(isEmployed()?employer->productivityPerEmployee:0.0) *
-        securityWellbeing(bankAccount->balance());
+    return currentConsumptionWellbeing * toilWellbeing() * securityWellbeing();
+}
+
+double Person::toilWellbeing() const {
+    if(!isEmployed()) return 0.0;
+    double x = (employer->toilPerUnitproduct-mu[TOIL])/sigma[TOIL];
+    return exp(-x*x);
+}
+
+double Person::securityWellbeing() const { return securityWellbeing(bankAccount->balance()); }
+
+double Person::securityWellbeing(double balance) const {
+    double x = balance/sigma[TOIL];
+    return erf(x);
+}
+
+// find best product out of 20 draws by company wealth
+// may return null if can't afford any found product
+Company *Person::selectProductFromAdvertising() {
+    const int nProductsToSearch = 20;
+    Company *bestCompany = nullptr;
+    double bestNonToilWellbeing = 0.0;
+    for(int t=0; t<nProductsToSearch; ++t) {
+        Company &manufacturer = *sim.chooseEmployerByWealth();
+        if(manufacturer.stock >= 1.0 && manufacturer.unitPrice <= bankAccount->balance()) {
+            double potentialNonToilWellbeing = consumptionWellbeing(manufacturer.product)*securityWellbeing(bankAccount->balance() - manufacturer.unitPrice);
+            if(potentialNonToilWellbeing > bestNonToilWellbeing) {
+                bestCompany = &manufacturer;
+                bestNonToilWellbeing = potentialNonToilWellbeing;
+            }
+        }
+    }
+    return bestCompany;
+}
+
+// find best product, exhaustive search
+// may return null if can't afford any product
+Company *Person::selectBestAvailableProduct() {
+    Company *bestCompany = nullptr;
+    double bestNonToilWellbeing = 0.0;
+    for(auto manufacturerIt = sim.companies.begin(); manufacturerIt != sim.companies.end(); ++ manufacturerIt) {
+        if(manufacturerIt->stock >= 1.0 && manufacturerIt->unitPrice <= bankAccount->balance()) {
+            double potentialNonToilWellbeing = consumptionWellbeing(manufacturerIt->product)*securityWellbeing(bankAccount->balance() - manufacturerIt->unitPrice);
+            if(potentialNonToilWellbeing > bestNonToilWellbeing) {
+                bestCompany = &*manufacturerIt;
+                bestNonToilWellbeing = potentialNonToilWellbeing;
+            }
+        }
+    }
+    return bestCompany;
 }
 

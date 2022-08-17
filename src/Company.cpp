@@ -37,17 +37,16 @@ void Company::step() {
             (*employeeIt)->lastWage = (*employeeIt)->wageExpectation;
             ++employeeIt;
         } else { // fire employee
-            (*employeeIt)->wageExpectation = Random::nextInt(1,(*employeeIt)->lastWage+1); // DIFFERENT FROM PAPER, but needed to reproduce results
-            (*employeeIt)->employer = nullptr;
-            *employeeIt = employees[employees.size()-1];
-            employees.pop_back();
+            (*employeeIt)->wageExpectation = Random::nextInt(1,(*employeeIt)->lastWage+1);
+            endEmployment(employeeIt);
         }
     }
     // production and price setting
     costOfProduction -= bankAccount->balance();
     double production = employees.size() * productivityPerEmployee / toilPerUnitproduct;
     stock += production;
-    unitPrice = 1 + (int)(costOfProduction * (1.0 + profitMargin) / production);
+//    unitPrice = 1 + (int)(costOfProduction * (1.0 + profitMargin) / production);
+    unitPrice = 1 + (int)(costOfProduction * (1.0 + profitMargin) / stock);
     ++age;
 }
 
