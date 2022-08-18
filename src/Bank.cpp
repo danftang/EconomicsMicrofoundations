@@ -29,16 +29,36 @@ int Bank::liabilities() {
 void Bank::step() {
     // charge loan interest and distribute credit interest.
     if(loans.size() > 2) {
-        int loanInterest = loanInterestAccount->balance()/((int)loans.size() - 2);
+        // distribute evenly
+//        int loanInterest = loanInterestAccount->balance()/((int)loans.size() - 2);
+//        for (auto loanIt = loans.begin(); loanIt != loans.end(); ++loanIt) {
+//            if (loanIt != reserveAccount && loanIt != loanInterestAccount)
+//                transfer(loanInterestAccount, loanIt, loanInterest);
+//        }
+
+        //distribute as a %age of balance
+        double totalLending = assets() - loanInterestAccount->balance() - reserveAccount->balance();
+        double interestRate = -loanInterestAccount->balance() / totalLending;
         for (auto loanIt = loans.begin(); loanIt != loans.end(); ++loanIt) {
             if (loanIt != reserveAccount && loanIt != loanInterestAccount)
-                transfer(loanInterestAccount, loanIt, loanInterest);
+                transfer(loanInterestAccount, loanIt, loanIt->balance()*interestRate);
         }
+
     }
-    int creditInterest = creditInterestAccount->balance()/((int)accounts.size()-1);
+
+    // distribute evenly
+//    int creditInterest = creditInterestAccount->balance()/((int)accounts.size()-1);
+//    for (auto accountIt = accounts.begin(); accountIt != accounts.end(); ++accountIt) {
+//        if(accountIt != creditInterestAccount) transfer(creditInterestAccount, accountIt, creditInterest);
+//    }
+
+    // distribute as %age of balance
+    double totalCredit = liabilities() - creditInterestAccount->balance();
+    double interestRate = creditInterestAccount->balance() / totalCredit;
     for (auto accountIt = accounts.begin(); accountIt != accounts.end(); ++accountIt) {
-        if(accountIt != creditInterestAccount) transfer(creditInterestAccount, accountIt, creditInterest);
+        if(accountIt != creditInterestAccount) transfer(creditInterestAccount, accountIt, accountIt->balance()*interestRate);
     }
+
 }
 
 bool Bank::transfer(Bank::AccountID sender, Bank::AccountID recipient, int amount) {

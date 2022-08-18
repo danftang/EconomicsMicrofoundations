@@ -1,6 +1,16 @@
 //
 // Created by daniel on 21/07/22.
 //
+// TODO: what happens if we remove the hiring bias towards large companies?
+// ...or at least replace it by some measure of "apparent desirability"
+// w.r.t. security, potential purchasing power, and perceived toil
+// (without assuming people have access to their own wellbeing function
+// i.e. they know their current wellbeing but cannot predict their
+// wellbeing under hypothetical situations)
+//
+// TODO: Add natural ability to do various things, which can then be used as
+// a basis for rational hiring and pay.
+
 
 #include <random>
 #include "Person.h"
@@ -8,7 +18,11 @@
 #include "Simulation.h"
 
 Person::Person() {
-    mu = {1.0 , 0.5, 0.0};
+    if(Random::nextBernoulli(0.5)) {
+        mu = {1.0, 0.1, 0.0};
+    } else {
+        mu = {1.0, 0.9, 0.0};
+    }
     sigma = {0.25, 0.25, initialAgentWealth};
     employer = nullptr; // unemployed
     wageExpectation = 1;
@@ -31,7 +45,10 @@ void Person::negotiateEmployment() {
     double pStartNewCompany = 0.025;
 
     // rational based on toilWellbeing and restlessness if toil is non-optimal
-    double cLookForNewJob = isEmployed()?pStartNewCompany + 0.05 * (2.0 - toilWellbeing()):1.0;
+//    double cLookForNewJob = isEmployed()?pStartNewCompany + 0.05 * (2.0 - toilWellbeing()):1.0;
+
+    // rational based on total wellbeing
+    double cLookForNewJob = isEmployed()?pStartNewCompany + 0.1 * (1.2 - wellbeing()):1.0;
 
     // this function creates a split product marketplace, if a company holds on to employees it
     // can somehow carry on (cheaper product for lower paid?)
@@ -39,6 +56,7 @@ void Person::negotiateEmployment() {
 
     if(rand < pStartNewCompany) {
         Company *newCompany = sim.startNewCompany(wageExpectation/2+1, Random::nextDouble(), Random::nextDouble(0.5, 1.5));
+//        Company *newCompany = sim.startNewCompany(wageExpectation/2+1, Random::nextDouble(), 1.0);
         if(newCompany != nullptr) {
             if(isEmployed()) employer->endEmployment(*this);
             wageExpectation = wageExpectation/2+1;
@@ -61,7 +79,8 @@ void Person::negotiateEmployment() {
 
 void Person::spend() {
     if(sim.companies.size() == 0) return;
-    Company *bestCompany = selectProductFromAdvertising();
+//    Company *bestCompany = selectProductFromAdvertising();
+    Company *bestCompany = selectBestAvailableProduct();
     if(bestCompany != nullptr) {
         sim.bank.transfer(bankAccount, bestCompany->bankAccount, bestCompany->unitPrice);
         sim.cumulativeDemand += bestCompany->unitPrice;

@@ -25,7 +25,7 @@ Company::~Company() {
 void Company::step() {
     double costOfProduction = bankAccount->balance(); // ... we'll subtract balance after costs
     if(loanAccount->balance() != 0) {
-        int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance()/5 + 1);
+        int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance()/8 + 1);
         sim.bank.transfer(bankAccount, loanAccount, loanRepayment);
     }
     // payroll and firing

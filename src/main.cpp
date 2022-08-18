@@ -9,7 +9,6 @@ thread_local Simulation sim(1000);
 int main() {
 
     std::vector<double> unemployed;
-    std::vector<int> firmSizes;
     std::vector<double> collectiveWellbeing;
     std::vector<double> gdp;
     double lastCumulativeDemand = 0.0;
@@ -20,9 +19,6 @@ int main() {
         if(month >= burnin) {
             unemployed.push_back(sim.proportionUnemployed()*100.0);
             collectiveWellbeing.push_back(sim.collectiveWellbeing());
-            for (const Company &company: sim.companies) {
-                firmSizes.push_back(company.employees.size());
-            }
             gdp.push_back(sim.cumulativeDemand - lastCumulativeDemand);
 
         }
@@ -31,7 +27,6 @@ int main() {
 //        std::cout << sim.companies.size() << " " << sim.collectiveWellbeing() << std::endl;
     }
 
-
     Gnuplot gpTime;
     gpTime << "set multiplot layout 2,1" << std::endl;
     gpTime << "plot '-' with lines title 'GDP by time'" << std::endl;
@@ -39,6 +34,7 @@ int main() {
     gpTime << "plot '-' with lines title 'Collective wellbeing by time'" << std::endl;
     gpTime.send1d(collectiveWellbeing);
     gpTime << "unset multiplot" << std::endl;
+
 
     std::vector<double> wealthDistribution;
     std::vector<double> wellbeingDistribution;
@@ -59,6 +55,7 @@ int main() {
 
     Histogram hProductDistribution(0.0, 1.0, 0.01, "Products");
     Histogram hProductivityDistribution(0.5, 1.5, 0.01,"Productivity");
+    std::vector<int> firmSizes;
     std::vector<int> companyAge;
     std::vector<double> companyBalanceDistribution;
     std::vector<double> companyDebtDistribution;
@@ -70,11 +67,13 @@ int main() {
         companyAge.push_back(company.age);
         companyBalanceDistribution.push_back(company.bankAccount->balance());
         companyDebtDistribution.push_back(company.loanAccount->balance());
+        firmSizes.push_back(company.employees.size());
         if(company.employees.size() > maxEmployees) {
             largestCompany = &company;
             maxEmployees = company.employees.size();
         }
 //        std::cout << company.bankAccount->balance() << " " << company.loanAccount->balance() << " = " << company.bankAccount->balance() + company.loanAccount->balance() << std::endl;
+
     }
     Gnuplot gpCompanies;
     gpCompanies << "set multiplot layout 2,2" << std::endl;
@@ -85,6 +84,7 @@ int main() {
     gpCompanies << "unset multiplot" << std::endl;
 
 
+    std::cout << "nCompanies = " << sim.companies.size() << std::endl;
     std::cout << "Largest company has " << largestCompany->employees.size() << " employees. Product/Productivity is "
     << largestCompany->product << " / " << largestCompany->productivityPerEmployee
     << " Balance = " << largestCompany->bankAccount->balance()
