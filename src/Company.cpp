@@ -24,10 +24,6 @@ Company::~Company() {
 
 void Company::step() {
     double costOfProduction = bankAccount->balance(); // ... we'll subtract balance after costs
-    if(loanAccount->balance() != 0) {
-        int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance()/8 + 1);
-        sim.bank.transfer(bankAccount, loanAccount, loanRepayment);
-    }
     // payroll and firing
     std::shuffle(employees.begin(), employees.end(), Random::gen);
     auto employeeIt = employees.begin();
@@ -37,9 +33,14 @@ void Company::step() {
             (*employeeIt)->lastWage = (*employeeIt)->wageExpectation;
             ++employeeIt;
         } else { // fire employee
-            (*employeeIt)->wageExpectation = Random::nextInt(1,(*employeeIt)->lastWage+1);
+//            (*employeeIt)->wageExpectation = Random::nextInt(1,(*employeeIt)->lastWage+1);
             endEmployment(employeeIt);
         }
+    }
+    // loan repayment
+    if(loanAccount->balance() != 0) {
+        int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance()/5 + 1);
+        sim.bank.transfer(bankAccount, loanAccount, loanRepayment);
     }
     // production and price setting
     costOfProduction -= bankAccount->balance();

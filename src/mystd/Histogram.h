@@ -35,6 +35,10 @@ public:
             double dX = ((max-min)/nBins)*1e-4;
             binWidth = ((max - min) + 2.0 * dX) / nBins;
             start = min - dX;
+            if(binWidth == 0.0) {
+                binWidth = 1.0;
+                start = min - 0.5 - nBins/2;
+            }
             initialiseFrequencyVector(nBins);
             for(const T &point: data) push(point);
         }

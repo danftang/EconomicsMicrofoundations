@@ -24,7 +24,7 @@ void Simulation::step() {
         if(companyIt->employees.size() == 0) {
             companyIt = companies.erase(companyIt);
         } else {
-            companies.set(companyIt, companyIt->bankAccount->balance());
+            companies.set(companyIt, companyIt->weight());
             ++companyIt;
         }
     }
@@ -61,7 +61,7 @@ void Simulation::sanityCheck() {
 //    std::cout << companies.size() << " companies" << std::endl;
     for(auto companyIt = companies.begin(); companyIt != companies.end(); ++companyIt) {
 //        std::cout << companyIt->bankAccount->balance() << " " << companies.weight(companyIt) << " " << companyIt->employees.size() << std::endl;
-        assert(fabs(companyIt->bankAccount->balance() - companies.weight(companyIt)) < 1e-8);
+        assert(fabs(companyIt->weight() - companies.weight(companyIt)) < 1e-8);
         companyIt->sanityCheck();
         totalEmployees += companyIt->employees.size();
     }

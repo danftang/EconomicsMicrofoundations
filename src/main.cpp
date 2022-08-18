@@ -87,6 +87,7 @@ int main() {
     std::cout << "nCompanies = " << sim.companies.size() << std::endl;
     std::cout << "Largest company has " << largestCompany->employees.size() << " employees. Product/Productivity is "
     << largestCompany->product << " / " << largestCompany->productivityPerEmployee
+    << " Age = " << largestCompany->age
     << " Balance = " << largestCompany->bankAccount->balance()
     << " Loan = " << largestCompany->loanAccount->balance()
     << std::endl;

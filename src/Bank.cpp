@@ -78,10 +78,10 @@ bool Bank::transfer(Bank::AccountID sender, Bank::AccountID recipient, int amoun
 
 int Bank::getStartupLoan() {
     int loanUpperLimit = -reserveAccount->balance()*reserveMultiplier - assets();
-//        std::cout << "Loan upper limit = " << loanUpperLimit << std::endl;
+        std::cout << "Loan upper limit = " << loanUpperLimit << " / " << -reserveAccount->balance()*reserveMultiplier << std::endl;
 //        std::cout << "reserve = " << -reserveAccount->balance() << std::endl;
-    double pApproveLoan = loanUpperLimit * 1.0/ (-reserveAccount->balance()*reserveMultiplier);
-//    std::cout << pApproveLoan << std::endl;
-    if(Random::nextDouble() < pApproveLoan) return Random::nextInt(0, loanUpperLimit/100);
+    double pApproveLoan = 0.5;//loanUpperLimit * 1.0/ (-reserveAccount->balance()*reserveMultiplier);
+    std::cout << pApproveLoan << std::endl;
+    if(Random::nextDouble() < pApproveLoan) return Random::nextInt(0, loanUpperLimit/4+1);
     return(0);
 }

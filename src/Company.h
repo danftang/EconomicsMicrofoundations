@@ -34,6 +34,8 @@ public:
     void endEmployment(Person &employee);
     void endEmployment(std::vector<Person *>::iterator employeeIt);
     void sanityCheck();
+//    double weight() { return bankAccount->balance(); }
+    double weight() { return 1.0; }
 };
 
 
