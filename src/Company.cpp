@@ -39,7 +39,7 @@ void Company::step() {
     }
     // loan repayment
     if(loanAccount->balance() != 0) {
-        int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance()/5 + 1);
+        int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance());
         sim.bank.transfer(bankAccount, loanAccount, loanRepayment);
     }
     // production and price setting
