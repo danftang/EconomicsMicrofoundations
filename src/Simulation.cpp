@@ -7,7 +7,9 @@
 #include "mystd/Random.h"
 
 
-Simulation::Simulation(int nAgents): people(nAgents), cumulativeDemand(0.0) { }
+Simulation::Simulation(int nAgents): people(nAgents), ppl(nAgents), cumulativeDemand(0.0) {
+    for(int i=0; i < people.size(); ++i) ppl[i] = &people[i];
+}
 
 
 // hiring (should we only hire if we can do payroll with no firing?)
@@ -29,14 +31,12 @@ void Simulation::step() {
         }
     }
     sanityCheck();
-    for(int i=0; i < people.size(); ++i) {
-//        chooseAgent().step();
-        people[i].step();
-    }
+    std::shuffle(ppl.begin(), ppl.end(), Random::gen);
+    for(int i=0; i < people.size(); ++i) ppl[i]->step();
 }
 
 
-MutableCategorical<Company>::iterator Simulation::chooseEmployerByWealth() {
+MutableCategorical<Company>::iterator Simulation::chooseEmployerByWeight() {
     return companies(Random::gen);
 }
 
@@ -78,7 +78,8 @@ void Simulation::sanityCheck() {
 Company *Simulation::startNewCompany(int founderInvestmentExpectation, double product, double productivity) {
     int loan = bank.getStartupLoan();
     if(loan > founderInvestmentExpectation) {
-        auto newCompanyIt = companies.emplace(loan, product, productivity);
+        auto newCompanyIt = companies.emplace(1.0, product, productivity);
+//        companies.set(newCompanyIt, newCompanyIt->weight());
         bank.transfer(newCompanyIt->loanAccount, newCompanyIt->bankAccount, loan);
         return &*newCompanyIt;
     }

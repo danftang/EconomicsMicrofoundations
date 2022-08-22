@@ -56,6 +56,10 @@ public:
         return std::binomial_distribution<int>(nTirals, p)(gen);
     }
 
+    static double nextGaussian(double mu, double sigma) {
+        return std::normal_distribution<double>(mu, sigma)(gen);
+    }
+
 };
 
 

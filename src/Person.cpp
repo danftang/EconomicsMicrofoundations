@@ -18,13 +18,14 @@
 #include "Simulation.h"
 
 Person::Person() {
-    mu = {1.0, 0.5, 0.0};
+    mu = {1.0, Random::nextGaussian(0.1, 0.05), 0.0};
+//    mu = {1.0, 0.1, 0.0};
 //    if(Random::nextBernoulli(0.5)) {
 //        mu = {1.0, 0.1, 0.0};
 //    } else {
 //        mu = {1.0, 0.9, 0.0};
 //    }
-    sigma = {0.25, 0.25, initialAgentWealth};
+    sigma = {0.25, 0.25, 100.0};
     employer = nullptr; // unemployed
     wageExpectation = 100;
     lastWage = 100;
@@ -42,39 +43,26 @@ void Person::step() {
 
 
 void Person::negotiateEmployment() {
-    double rand = Random::nextDouble();
-    double pStartNewCompany = 0.05;
-
-    // rational based on toilWellbeing and restlessness if toil is non-optimal
-//    double cLookForNewJob = isEmployed()?pStartNewCompany + 0.05 * (2.0 - toilWellbeing()):1.0;
-
-    // rational based on total wellbeing
-    double cLookForNewJob = isEmployed()?pStartNewCompany + (1.0-pStartNewCompany) * (1.0 - wellbeing()):1.0;
-
-    // this function creates a split product marketplace, if a company holds on to employees it
-    // can somehow carry on (cheaper product for lower paid?)
-//    double cLookForNewJob = isEmployed()?pStartNewCompany + 0.05 * (employer->toilPerUnitproduct - 0.5):1.0;
-
-    if(rand < pStartNewCompany) {
-        Company *newCompany = sim.startNewCompany(wageExpectation, Random::nextDouble(), Random::nextDouble(0.5, 1.5));
-//        Company *newCompany = sim.startNewCompany(wageExpectation/2+1, Random::nextDouble(), 1.0);
-        if(newCompany != nullptr) {
-            if(isEmployed()) employer->endEmployment(*this);
-//            wageExpectation = wageExpectation/2+1;
-            newCompany->hire(this);
-        }
-    } else if(rand < cLookForNewJob) {
-        auto newEmployer = sim.chooseEmployerByWealth();
-        if(newEmployer != sim.companies.end()) {
-//            int negotiatedWage = newEmployer->negotiateWage(*this);
-//            if (negotiatedWage > wageExpectation) {
+    double pStartNewCompany = 0.005;
+    double restlessness = isEmployed()?0.1*(1.0-toilWellbeing()):1.0;
+//    if(isEmployed()) std::cout << "restlessness = " << restlessness << " toilWellbieng = " << toilWellbeing() << " toil = " << employer->toilPerUnitproduct << std::endl;
+    if(Random::nextBernoulli(restlessness)) {
+//        std::cout << "isRestless" << std::endl;
+        if(Random::nextBernoulli(pStartNewCompany)) {
+            Company *newCompany = sim.startNewCompany(wageExpectation, Random::nextDouble(), Random::nextDouble(0.5, 1.5));
+            if(newCompany != nullptr) {
                 if(isEmployed()) employer->endEmployment(*this);
-//                wageExpectation = negotiatedWage;
-                newEmployer->hire(this);
-//            }
+                newCompany->hire(*this);
+//                std::cout << "Started new company " << newCompany->product << " / " << newCompany->productivityPerEmployee << " investment = " << newCompany->bankAccount->balance() << std::endl;
+            }
+        } else {
+            auto newEmployer = sim.chooseEmployerByWeight();
+            if(newEmployer != sim.companies.end()) {
+                if(isEmployed()) employer->endEmployment(*this);
+                newEmployer->hire(*this);
+            }
         }
     }
-//    if (!isEmployed()) wageExpectation = Random::nextInt(1, wageExpectation + 1);
 }
 
 
@@ -129,7 +117,7 @@ Company *Person::selectProductFromAdvertising() {
     Company *bestCompany = nullptr;
     double bestNonToilWellbeing = 0.0;
     for(int t=0; t<nProductsToSearch; ++t) {
-        Company &manufacturer = *sim.chooseEmployerByWealth();
+        Company &manufacturer = *sim.chooseEmployerByWeight();
         if(manufacturer.stock >= 1.0 && manufacturer.unitPrice <= bankAccount->balance()) {
             double potentialNonToilWellbeing = consumptionWellbeing(manufacturer.product)*securityWellbeing(bankAccount->balance() - manufacturer.unitPrice);
             if(potentialNonToilWellbeing > bestNonToilWellbeing) {

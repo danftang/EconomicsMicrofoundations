@@ -14,7 +14,7 @@ int main() {
     double lastCumulativeDemand = 0.0;
     const int burnin = 200;
 
-    for(int month = 0; month < 1200; ++month) {
+    for(int month = 0; month < 2400; ++month) {
         sim.step();
         if(month >= burnin) {
             unemployed.push_back(sim.proportionUnemployed()*100.0);
@@ -59,6 +59,8 @@ int main() {
     std::vector<int> companyAge;
     std::vector<double> companyBalanceDistribution;
     std::vector<double> companyDebtDistribution;
+    std::vector<std::pair<double,double>> priceProduct;
+
     const Company *largestCompany = nullptr;
     int maxEmployees = 0;
     for(const Company &company: sim.companies) {
@@ -68,6 +70,7 @@ int main() {
         companyBalanceDistribution.push_back(company.bankAccount->balance());
         companyDebtDistribution.push_back(company.loanAccount->balance());
         firmSizes.push_back(company.employees.size());
+        priceProduct.push_back(std::pair(company.product, company.unitPrice));
         if(company.employees.size() > maxEmployees) {
             largestCompany = &company;
             maxEmployees = company.employees.size();
@@ -76,11 +79,13 @@ int main() {
 
     }
     Gnuplot gpCompanies;
-    gpCompanies << "set multiplot layout 2,2" << std::endl;
+    gpCompanies << "set multiplot layout 3,2" << std::endl;
     gpCompanies << hProductDistribution;
     gpCompanies << hProductivityDistribution;
     gpCompanies << Histogram(companyAge,100,"Company age");
     gpCompanies << Histogram(firmSizes,100,"Firm sizes");
+    gpCompanies << "plot '-' with points title 'price by product'" << std::endl;
+    gpCompanies.send1d(priceProduct);
     gpCompanies << "unset multiplot" << std::endl;
 
 

@@ -29,12 +29,13 @@ public:
     ~Company();
 
     void step();
-    void hire(Person *employee);
+    void hire(Person &employee);
     int negotiateWage(Person &);
     void endEmployment(Person &employee);
     void endEmployment(std::vector<Person *>::iterator employeeIt);
     void sanityCheck();
 //    double weight() { return bankAccount->balance(); }
+//    double weight() { return employees.size(); }
     double weight() { return 1.0; }
 };
 

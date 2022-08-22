@@ -17,13 +17,14 @@ public:
 
     Bank                        bank;
     std::vector<Person>         people;
+    std::vector<Person *>       ppl;
     MutableCategorical<Company> companies;  // container of companies from which we can draw for recruitment
     long int                    cumulativeDemand;   // demand since last reset
 
     Simulation(int nAgents);
 
     void step();
-    MutableCategorical<Company>::iterator chooseEmployerByWealth();
+    MutableCategorical<Company>::iterator chooseEmployerByWeight();
     Person &chooseAgent();
     Company *startNewCompany(int founderInvestmentExpectation, double product, double productivity);
 

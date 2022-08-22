@@ -39,7 +39,8 @@ void Company::step() {
     }
     // loan repayment
     if(loanAccount->balance() != 0) {
-        int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance());
+//        int loanRepayment = std::min(bankAccount->balance(), -loanAccount->balance()/10); // paydown percentage of debt
+        int loanRepayment = std::min(bankAccount->balance()/10, -loanAccount->balance()); // paydown as can afford
         sim.bank.transfer(bankAccount, loanAccount, loanRepayment);
     }
     // production and price setting
@@ -65,7 +66,8 @@ void Company::sanityCheck() {
 
 void Company::endEmployment(Person &employee) {
     auto employeeIt = std::find(employees.begin(), employees.end(), &employee);
-    if(employeeIt != employees.end()) endEmployment(employeeIt);
+    assert(employeeIt != employees.end());
+    endEmployment(employeeIt);
 }
 
 
@@ -77,8 +79,8 @@ void Company::endEmployment(std::vector<Person *>::iterator employeeIt) {
 }
 
 
-void Company::hire(Person *employee) {
-    assert(employee->employer == nullptr);
-    employee->employer = this;
-    employees.push_back(employee);
+void Company::hire(Person &employee) {
+    assert(employee.employer == nullptr);
+    employee.employer = this;
+    employees.push_back(&employee);
 }

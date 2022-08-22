@@ -30,10 +30,10 @@ void Bank::step() {
     // charge loan interest and distribute credit interest.
     if(loans.size() > 2) {
         // distribute evenly
-//        int loanInterest = loanInterestAccount->balance()/((int)loans.size() - 2);
+//        int loanInterest = -loanInterestAccount->balance()/((int)loans.size() - 2);
 //        for (auto loanIt = loans.begin(); loanIt != loans.end(); ++loanIt) {
 //            if (loanIt != reserveAccount && loanIt != loanInterestAccount)
-//                transfer(loanInterestAccount, loanIt, loanInterest);
+//                transfer(loanIt, loanInterestAccount, loanInterest);
 //        }
 
         //distribute as a %age of balance
@@ -41,7 +41,7 @@ void Bank::step() {
         double interestRate = -loanInterestAccount->balance() / totalLending;
         for (auto loanIt = loans.begin(); loanIt != loans.end(); ++loanIt) {
             if (loanIt != reserveAccount && loanIt != loanInterestAccount)
-                transfer(loanInterestAccount, loanIt, loanIt->balance()*interestRate);
+                transfer(loanIt, loanInterestAccount, -loanIt->balance()*interestRate);
         }
 
     }
@@ -78,10 +78,11 @@ bool Bank::transfer(Bank::AccountID sender, Bank::AccountID recipient, int amoun
 
 int Bank::getStartupLoan() {
     int loanUpperLimit = -reserveAccount->balance()*reserveMultiplier - assets();
-        std::cout << "Loan upper limit = " << loanUpperLimit << " / " << -reserveAccount->balance()*reserveMultiplier << std::endl;
+//        std::cout << "Loan upper limit = " << loanUpperLimit << " / " << -reserveAccount->balance()*reserveMultiplier << std::endl;
 //        std::cout << "reserve = " << -reserveAccount->balance() << std::endl;
-    double pApproveLoan = 0.5;//loanUpperLimit * 1.0/ (-reserveAccount->balance()*reserveMultiplier);
-    std::cout << pApproveLoan << std::endl;
-    if(Random::nextDouble() < pApproveLoan) return Random::nextInt(0, loanUpperLimit/4+1);
-    return(0);
+//    double pApproveLoan = 0.5;//loanUpperLimit * 1.0/ (-reserveAccount->balance()*reserveMultiplier);
+//    std::cout << pApproveLoan << std::endl;
+//    if(Random::nextDouble() < pApproveLoan) return Random::nextInt(0, loanUpperLimit/4+1);
+//    return(0);
+    return 1000;
 }
