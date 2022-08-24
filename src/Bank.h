@@ -61,7 +61,7 @@ public:
     void closeLoanAccount(AccountID accountId) {
         if(accountId != loans.end()) {
 //            std::cout << "Closing loan account" << accountId->balance() << std::endl;
-            transfer(accountId, loanInterestAccount, accountId->balance());
+            transfer(loanInterestAccount, accountId, -accountId->balance());
             assert(accountId->balance() == 0);
             loans.erase(accountId);
         }

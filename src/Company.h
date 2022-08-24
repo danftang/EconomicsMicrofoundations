@@ -7,14 +7,19 @@
 
 #include <list>
 #include "Bank.h"
-#include "Person.h"
+#include "Agent.h"
+
+class Person;
 
 class Company: public Agent {
 public:
+    typedef ulong ID;
+
     constexpr static const double   profitMargin = 0.1;
     constexpr static const double   SUGAR_TOIL = 0.5; // person-months of standard-productivity toil needed to grow 1 unit of sugar
     constexpr static const double   SPICE_TIOL = 1.5; // person-months of standard-productivity toil needed to grow 1 unit of spice
-
+    constexpr static const ID       NOBRAND = 0;
+    static ID nextId;
 
     std::vector<Person *>   employees;
     Bank::AccountID         loanAccount;
@@ -24,6 +29,7 @@ public:
     double                  stock;      // amount of product available
     int                     unitPrice;
     int                     age;    // of company in months (steps)
+    ulong                   id;
 
     Company(double product, double productivity);
     ~Company();

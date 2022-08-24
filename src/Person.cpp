@@ -69,7 +69,8 @@ void Person::negotiateEmployment() {
 void Person::spend() {
     if(sim.companies.size() == 0) return;
 //    Company *bestCompany = selectProductFromAdvertising();
-    Company *bestCompany = selectBestAvailableProduct();
+//    Company *bestCompany = selectBestAvailableProduct();
+    Company *bestCompany = selectProductByTrialAndError();
     if(bestCompany != nullptr) {
         sim.bank.transfer(bankAccount, bestCompany->bankAccount, bestCompany->unitPrice);
         sim.cumulativeDemand += bestCompany->unitPrice;
@@ -146,3 +147,35 @@ Company *Person::selectBestAvailableProduct() {
     return bestCompany;
 }
 
+
+Company *Person::selectProductByTrialAndError() {
+    const double pExploit = 0.9;
+    std::vector<Company *> affordableUnknownProducts;
+    affordableUnknownProducts.reserve(sim.companies.size()/2);
+    Company *bestKnownProduct = nullptr; // best by non-toil wellbeing
+    double bestKnownWellbeing = 0.0;
+    for(Company &company: sim.companies) {
+        if(company.unitPrice < bankAccount->balance() && company.stock >= 1.0) {
+            auto knownBrandEntry = knownBrands.find(company.id);
+            if(knownBrandEntry != knownBrands.end()) {
+                double nonToilWellbeing = knownBrandEntry->second * securityWellbeing(bankAccount->balance() - company.unitPrice);
+                if(nonToilWellbeing > bestKnownWellbeing) {
+                    bestKnownWellbeing = nonToilWellbeing;
+                    bestKnownProduct = &company;
+                }
+            } else {
+                affordableUnknownProducts.push_back(&company);
+            }
+        }
+    }
+
+    if(bestKnownProduct != nullptr && (affordableUnknownProducts.empty() || Random::nextBernoulli(pExploit))) {
+        return bestKnownProduct;
+    }
+
+    if(affordableUnknownProducts.empty()) return nullptr; // no affordable products
+
+    Company *newProduct = affordableUnknownProducts[Random::nextInt(affordableUnknownProducts.size())];
+    knownBrands[newProduct->id] = consumptionWellbeing(newProduct->product);
+    return newProduct;
+}

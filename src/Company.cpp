@@ -8,6 +8,8 @@
 #include "Person.h"
 #include "mystd/Random.h"
 
+Company::ID Company::nextId = 0;
+
 Company::Company(double product, double productivity) :
         Agent(),
         loanAccount(sim.bank.openLoanAccount()),
@@ -15,7 +17,8 @@ Company::Company(double product, double productivity) :
         stock(0.0),
         productivityPerEmployee(productivity),
         toilPerUnitproduct(SPICE_TIOL*product + SUGAR_TOIL*(1.0-product)),
-        age(0) { }
+        age(0),
+        id(++nextId) { }
 
 Company::~Company() {
     sim.bank.transfer(bankAccount, loanAccount, std::min(bankAccount->balance(), -loanAccount->balance())); // pay off any debt

@@ -7,10 +7,11 @@
 #define ECONOMICSMICROFOUNDATIONS_PERSON_H
 
 #include <array>
+#include <map>
 #include "Agent.h"
+#include "Company.h"
 
 class Simulation;
-class Company;
 
 // Each person must consume 1 unit of product per month in order to survive
 // however, different products lead to different wellbeing
@@ -29,6 +30,8 @@ public:
     double      currentConsumptionWellbeing;
     std::array<double,3>      mu;       // wellbeing function (of monthly toil and monthly consumption)
     std::array<double,3>      sigma;    // assuming 2D Gaussian with diagonal covaraince matrix
+//    Company::ID               favouriteBrand;
+    std::map<Company::ID, double>   knownBrands;
 
     Person();
 
@@ -47,6 +50,8 @@ public:
 protected:
     Company *selectProductFromAdvertising();
     Company *selectBestAvailableProduct();
+
+    Company *selectProductByTrialAndError();
 };
 
 

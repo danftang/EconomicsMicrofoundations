@@ -39,19 +39,24 @@ protected:
     };
 
 
-    template<class V>
+    template<class V, class CT>
     class iterator_base {
     public:
+        typedef std::forward_iterator_tag iterator_category;
+        typedef CT value_type;
+        typedef typename V::difference_type difference_type;
+        typedef CT *pointer;
+        typedef CT &reference;
 
         iterator_base(V ptr): ptr(ptr) {}
 
-        auto &operator *()  { return ptr->value; }
-        auto *operator ->() { return &ptr->value; }
-        iterator_base<V> &operator ++() { ++ptr; return *this; }
-        iterator_base<V> operator ++(int) { return ptr++; }
-        bool operator ==(const iterator_base<V> &other) const { return ptr == other.ptr; }
-        bool operator !=(const iterator_base<V> &other) const { return ptr != other.ptr; }
-        operator iterator_base<typename std::list<Category>::const_iterator>() { return iterator_base<typename std::list<Category>::const_iterator>(ptr); }
+        reference operator *()  { return ptr->value; }
+        pointer operator ->() { return &ptr->value; }
+        iterator_base<V,CT> &operator ++() { ++ptr; return *this; }
+        iterator_base<V,CT> operator ++(int) { return ptr++; }
+        bool operator ==(const iterator_base<V,CT> &other) const { return ptr == other.ptr; }
+        bool operator !=(const iterator_base<V,CT> &other) const { return ptr != other.ptr; }
+        operator iterator_base<typename std::list<Category>::const_iterator,const T>() { return iterator_base<typename std::list<Category>::const_iterator,const T>(ptr); }
 
     protected:
         V ptr;
@@ -62,8 +67,8 @@ protected:
 
 public:
     typedef T value_type;
-    typedef iterator_base<typename std::list<Category>::iterator>        iterator;
-    typedef iterator_base<typename std::list<Category>::const_iterator>  const_iterator;
+    typedef iterator_base<typename std::list<Category>::iterator, T>        iterator;
+    typedef iterator_base<typename std::list<Category>::const_iterator, const T>  const_iterator;
 
     MutableCategoricalArray mca;
     std::vector<iterator>   indexToCategory;
@@ -103,6 +108,17 @@ public:
     template<class RNG> const_iterator operator()(RNG &randomGenerator) const {
         if(size() == 0) return categories.end();
         return indexToCategory[mca(randomGenerator)];
+    }
+
+    template<class RNG> iterator chooseUniform(RNG &randomGenerator) {
+        if(size() == 0) return categories.end();
+        int index = std::uniform_int_distribution<int>(0,indexToCategory.size()-1)(randomGenerator);
+        iterator it = indexToCategory[index];
+        return it;
+    }
+    template<class RNG> const_iterator chooseUniform(RNG &randomGenerator) const {
+        if(size() == 0) return categories.end();
+        return indexToCategory[std::uniform_int_distribution<int>(0,indexToCategory.size()-1)(randomGenerator)];
     }
 
 

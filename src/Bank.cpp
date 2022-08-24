@@ -71,6 +71,7 @@ bool Bank::transfer(Bank::AccountID sender, Bank::AccountID recipient, int amoun
         std::cout << "Refusing transfer to loan account" << std::endl;
         return false;
     }
+//    assert(amount >= 0 && amount < 1000000);
     sender->_balance -= amount;
     recipient->_balance += amount;
     return true;
