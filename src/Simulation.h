@@ -21,6 +21,11 @@ public:
     MutableCategorical<Company> companies;  // container of companies from which we can draw for recruitment
     long int                    cumulativeDemand;   // demand since last reset
 
+    // simulation parameters and default values
+    double pStartNewCompany = 0.005;
+    double pProductChoiceExploit = 0.9;
+
+
     Simulation(int nAgents);
 
     void step();

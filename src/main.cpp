@@ -6,8 +6,28 @@
 
 thread_local Simulation sim(1000);
 
-int main() {
+void twoCompanyTest() {
+    Company *A = sim.startNewCompany(0, 0.5, 1.0);
+    Company *B = sim.startNewCompany(0, 0.5, 1.25);
+    sim.pStartNewCompany = 0.0;
+    A->hire(sim.people[0]);
+    B->hire(sim.people[1]);
 
+    for(int t=0; t<100; ++t) {
+        sim.step();
+        std::cout
+                << "\tsize  = " << A->employees.size() << " / " << B->employees.size()
+                << "\tstock = " << A->stock  << " / " << B->stock
+                << "\tsales = " << A->postProductionStock - A->stock  << " / " << B->postProductionStock - B->stock
+                << "\tprice = " << A->unitPrice  << " / " << B->unitPrice
+                << "\tbank  = " << A->bankAccount->balance() << " / " << B->bankAccount->balance()
+                << std::endl;
+//        std::cout  << A->employees.size() << " " << A->unitPrice << std::endl;
+    }
+}
+
+
+int main() {
     std::vector<double> unemployed;
     std::vector<double> collectiveWellbeing;
     std::vector<double> gdp;
@@ -23,8 +43,6 @@ int main() {
 
         }
         lastCumulativeDemand = sim.cumulativeDemand;
-
-//        std::cout << sim.companies.size() << " " << sim.collectiveWellbeing() << std::endl;
     }
 
     Gnuplot gpTime;
@@ -35,22 +53,31 @@ int main() {
     gpTime.send1d(collectiveWellbeing);
     gpTime << "unset multiplot" << std::endl;
 
-
     std::vector<double> wealthDistribution;
-    std::vector<double> wellbeingDistribution;
+    Histogram wellbeingDistribution(0.0, 1.0, 0.01,"Wellbeing");
+    Histogram consumptionWellbeing(0.0,1.0,0.01,"Consumption wellbeing");
+    Histogram toilWellbeing(0.0,1.0,0.01,"ToilWellbeing");
+    Histogram securityWellbeing(0.0,1.0,0.01,"Security wellbeing");
     std::vector<double> wageDistribution;
     for(const Person &person: sim.people) {
         if(person.isEmployed()) wageDistribution.push_back(person.wageExpectation);
         wealthDistribution.push_back(person.bankAccount->balance()/1000.0);
-        wellbeingDistribution.push_back(person.wellbeing());
+        wellbeingDistribution.push(person.wellbeing());
+        consumptionWellbeing.push(person.currentConsumptionWellbeing);
+        toilWellbeing.push(person.toilWellbeing());
+        securityWellbeing.push(person.securityWellbeing());
     }
 
     Gnuplot gpPerson;
-    gpPerson << "set multiplot layout 2,2" << std::endl;
+    gpPerson << "set term wxt size 1200,640" << std::endl;
+    gpPerson << "set multiplot layout 3,3" << std::endl;
     gpPerson << Histogram(wageDistribution,100,"Wage distribution");
     gpPerson << Histogram(wealthDistribution,100,"Wealth (£k)");
-    gpPerson << Histogram(wellbeingDistribution,100,"Wellbeing");
     gpPerson << Histogram(unemployed,100,"Unemployed %");
+    gpPerson << wellbeingDistribution;
+    gpPerson << consumptionWellbeing;
+    gpPerson << toilWellbeing;
+    gpPerson << securityWellbeing;
     gpPerson << "unset multiplot" << std::endl;
 
     Histogram hProductDistribution(0.0, 1.0, 0.01, "Products");

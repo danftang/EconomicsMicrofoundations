@@ -27,6 +27,7 @@ public:
     const double            toilPerUnitproduct;
     const double            productivityPerEmployee; // how hard do employees work?
     double                  stock;      // amount of product available
+    double                  postProductionStock;
     int                     unitPrice;
     int                     age;    // of company in months (steps)
     ulong                   id;

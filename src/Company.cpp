@@ -49,9 +49,13 @@ void Company::step() {
     // production and price setting
     costOfProduction -= bankAccount->balance();
     double production = employees.size() * productivityPerEmployee / toilPerUnitproduct;
+    unitPrice = std::max(
+            1 + (int)(costOfProduction * (1.0 + profitMargin) / (production + stock*0.5)),
+            1 + (int)(costOfProduction/production)
+            );
     stock += production;
+    postProductionStock = stock;
 //    unitPrice = 1 + (int)(costOfProduction * (1.0 + profitMargin) / production);
-    unitPrice = 1 + (int)(costOfProduction * (1.0 + profitMargin) / stock);
     ++age;
 }
 

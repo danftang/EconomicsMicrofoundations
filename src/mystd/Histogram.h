@@ -18,7 +18,7 @@ public:
     std::string title;
 
     Histogram(double start, double end, double binWidth, std::string title): start(start), binWidth(binWidth), title(std::move(title)) {
-        int nBins = (end-start)/binWidth - 0.5;
+        int nBins = std::ceil((end-start)/binWidth);
         initialiseFrequencyVector(nBins);
     }
     
